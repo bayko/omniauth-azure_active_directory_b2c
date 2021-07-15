@@ -55,7 +55,7 @@ module OmniAuth
       end
 
       def policy
-        @policy = Policy.new(**policy_options.symbolize_keys)
+        @policy = Policy.new(**policy_options.deep_symbolize_keys)
       end
 
       def redirect_uri
@@ -129,6 +129,34 @@ module OmniAuth
         if results.has_errors?
           raise IdTokenValidationError, results.full_messages.join('. ')
         end
+      end
+
+      #########################################
+      # Rails ENVs
+      #########################################
+
+      def redirect_uri
+        ENV['AZURE_B2C_CALLBACK_URL']
+      end
+
+      def policy_options
+        { 
+          application_identifier: ENV['AZURE_CLIENT_ID'],
+          application_secret: ENV['AZURE_CLIENT_SECRET'],
+          issuer: ENV['AZURE_JWT_ISSUER'],
+          tenant_name: ENV['AZURE_TENANT_URL'],
+          policy_name: ENV['AZURE_B2C_POLICY_NAME'],
+          jwk_signing_algorithm: :RS256,
+          jwk_signing_keys: { 
+            'kid' => ENV['AZURE_JWT_KID'], 
+            'n' => ENV['AZURE_JWT_N'], 
+            'e' => ENV['AZURE_JWT_E'], 
+            'kty' => ENV['AZURE_JWT_KTY']
+          },
+          scope: [
+            :openid
+          ]
+        }
       end
 
       #########################################
